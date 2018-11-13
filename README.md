@@ -5,10 +5,10 @@ I also created a few python scripts to back up the database and the images
 
 Some of it's functionalities include:
 
-Authentication using Google Account
-Display of all memes created
-Approval process of memes by administrator
-"Like" feature to show who likes what memes
-Webhooks to show memes to all users signed in when a new one is created
-Creation of Meme applying text and filters using C#
-Filter memes by who created them
+Authentication using Google Account, 
+Display of all memes created, 
+Approval process of memes by administrator, 
+"Like" feature to show who likes what memes, 
+Webhooks to show memes to all users signed in when a new one is created, 
+Creation of Meme applying text and filters using C#, 
+Filter memes by who created them, 
