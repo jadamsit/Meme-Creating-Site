@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<%
+  if (user.isAdmin != '1'){%>
+  <script>
+    window.location.href = "http://nodejs.jwadams.it210.it.et.byu.edu/memes";
+  </script>
+  <%
+  }
+%>
+
+    <head>
+      <meta charset='utf-8'>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script type='text/javascript' src="http://code.jquery.com/jquery-latest.min.js"></script>
+      <script type='text/javascript' src='/js/bootstrap.min.js'></script>
+      <script type='text/javascript' src="/socket.io/socket.io.js"></script>
+
+      <link rel='stylesheet' type='text/css' href='/css/bootstrap.min.css'>
+      <link rel='stylesheet' type='text/css' href='/css/bootstrap-responsive.min.css'>
+      <link rel='stylesheet' type='text/css' href='/css/style.css'>
+
+      <title>MEMES!</title>
+    </head>
+
+
+    <body class="bd">
+      <div class='navbar navbar-inverse'>
+        <div class='navbar-inner'>
+          <div class='container'>
+            <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+            <div class='nav-collapse collapse'>
+              <ul class='nav'>
+                <li id='home-nav-item'><a href='/memes'>Memes</a></li>
+                <% if (user == '1'){ %>
+                  <li id='home-nav-item'><a href='/login'>Login</a></li>
+                  <% }
+                else if (user.isAdmin == '1') {%>
+                    <li id='home-nav-item'><a href="http://192.168.101.78/Default.aspx?key=<%=user.cskey%>">Create Meme</a></li>
+                    <li id='home-nav-item'><a href='/admin'>Admin Page</a></li>
+                    <li id='home-nav-item'><a href='/logout'>Logout</a></li>
+                    <% }
+                  else {%>
+                      <li id='home-nav-item'><a href="http://192.168.101.78/Default.aspx?key=<%=user.cskey%>">Create Meme</a></li>
+                      <li id='home-nav-item'><a href='/logout'>Logout</a></li>
+                      <% } %>
+              </ul>
+              <ul class='nav pull-right'>
+                <li><a href='#'>Welcome,
+                <% if (user == '1'){%>Guest<%
+                }
+                else{%><%=user.displayName%><%
+                }
+                  %>
+							 <!--
+								You will want to add code here (PART 2) to allow you to display a custom message if a user is
+								logged in (Welcome Bob!) or a generic message if no one is logged into the site (Welcome Guest User).
+								Similarly, if a user is not logged in you want a login button to display and no logout button,
+								but if a user is logged in then you want to display a logout button. You may need to break in
+								and out of Node JS several times using "< % % >" and "< %= % >"
+							 -->
+						</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <time></time>
+        <div id="wrapper">
+          <h4 style="color:white;">Delete User</h4>
+          <form action="/remUser" name="userId" method="POST">
+            <select name="userId">
+              <% for(var i = 0, len = users.length; i < len; i++){
+  					var current_user = users[i];%>
+                <option value="<%=current_user.userId%>"><%=current_user.userName%></option>
+                <% } %>
+            </select>
+            <button class="btn btn-primary float-left" type="submit">Submit</button>
+          </form>
+          <h4 style="color:white;">Delete Image</h4>
+          <form action="/remImage" name="imageId" method="POST">
+            <select name="imageId">
+              <% for(var i = 0, len = imageList.length; i < len; i++){
+  					var current_image = imageList[i];%>
+                <option value="<%=current_image.imageId%>"><%=current_image.imageId%> - <%=current_image.altText%></option>
+                <% } %>
+            </select>
+            <button class="btn btn-primary float-left" type="submit">Submit</button>
+          </form>
+          </br>
+          <h4 style="color:white;">Approve Images</h4>
+          <div id="columns">
+            <!--
+				 The following lines break out of html into ejs to process data passed to the view
+				 from the controller. The "<% %>" indicates that you are breaking out of and then back into html.
+				 Notice that the open bracket for the for loop starts here, but ends after the html, meaning that
+				 the html between will be printed each time through the loop
+				-->
+            <% for(var i = 0, len = imageList.length; i < len; i++){
+					var current_image = imageList[i];
+          if (current_image.imageApproved == 0){%>
+              <!-- Here are examples of printing out a variable's value with "< %= % >" -->
+              <div class="pin back-image" id="block<%=current_image.imageId%>">
+                <img src="<%=current_image.imagePath%>" alt="<%=current_image.altText%>">
+                <form action="/approve/<%=current_image.imageId%>" method="POST">
+                  <button class="btn btn-primary btn-mini float-left" type="submit">Approve</button>
+                </form>
+                <!-- this button is for "liking" the image. On click it passes the image id and the button's id to the updateLikeCount function -->
+
+                <!-- this button is a link to a user specific page -->
+              </div>
+              <% } } %>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        //connect to the websocket server
+        var socket = io.connect('http://192.168.90.36:1337'); //change this IP address your server
+
+        //on the notification event add the new meme(s) to the '#columns' div
+        //this notification is coming from the server.js meme-hook function
+        socket.on('notification', function(data) {
+          var images = data.images;
+          var imagesLength = images.length;
+          var userArray = data.users;
+          //var userLength = userArray.length;
+
+          for (var i = 0; i < imagesLength; i++) {
+            //for (var j = 0; j < userLength; j++) {
+            var current_image = images[i];
+            if (!document.getElementById('block' + images[i].imageId)) {
+              $('#columns').append(
+                '<div class="pin back-image" id="block' + images[i].imageId + '" >' +
+                '<img src="' + images[i].imagePath + '"alt="' + images[i].altText + '">' +
+                '<button class="btn btn-primary btn-mini float-left" id="like' + images[i].imageId + '" type="button"' + 'onClick="updateLikeCount(' + images[i].imageId + ', this.id);">Likes:' + images[i].numLikes + '</button><br>' +
+                '<a class="btn btn-info btn-mini" style="margin-top:5px;" href="/memes/' + current_image.userName + '/view">More by ' + current_image.userName + '</a>' +
+                '</div>'
+              );
+              //  }
+            }
+          }
+
+          /* DO WORK HERE IN PART 2!
+          This function receives all of the meme information sent from the web socket.
+          Figure out how to use that data to update the page when a new meme is added.
+          We recommend using the jQuery ".append()" function
+          */
+
+          //if you want the '<time></time>' div to update with a time stamp, uncomment the following line
+          //$('time').html('Last Update:' + data.time);
+        })
+
+        //called when the like button is clicked
+        function updateLikeCount(imageId, buttonId) {
+          <% if (user != '1'){%>
+          socket.emit('button_click', imageId, buttonId);
+          <% } %>
+          //You will need to use socket.emit to send information to the server (server.js). Use the event name 'button_click'
+        }
+
+        //called on return of updateLikeCount (above) after it runs on the server file
+        socket.on('return_click', function(newImage, buttonId) {
+          $('#' + buttonId).html('Likes: ' + newImage.numLikes);
+          //You will need to add functionality here to update the text for the button containing the like count
+        })
+      </script>
+    </body>
+
+</html>
