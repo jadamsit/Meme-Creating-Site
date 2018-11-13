@@ -1,6 +1,7 @@
 # node
 
 This was a project that I created using node.js and MySQL. It is a meme creating and sharing social networking site. 
+I also created a few python scripts to back up the database and the images
 
 Some of it's functionalities include:
 
